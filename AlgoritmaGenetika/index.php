@@ -97,7 +97,7 @@ switch (ENVIRONMENT)
  * This variable must contain the name of your "system" directory.
  * Set the path if it is not in the same directory as this file.
  */
-	$system_path = 'CISystem';
+	$system_path = '../CISystem/';
 
 /*
  *---------------------------------------------------------------
@@ -114,7 +114,7 @@ switch (ENVIRONMENT)
  *
  * NO TRAILING SLASH!
  */
-	$application_folder = 'AlgoritmaGenetika';
+	$application_folder = '../AppAlGen';
 
 /*
  *---------------------------------------------------------------

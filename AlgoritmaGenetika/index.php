@@ -114,7 +114,7 @@ switch (ENVIRONMENT)
  *
  * NO TRAILING SLASH!
  */
-	$application_folder = '../AppAlGen';
+	$application_folder = '../AlgoritmaGenetika_APP';
 
 /*
  *---------------------------------------------------------------

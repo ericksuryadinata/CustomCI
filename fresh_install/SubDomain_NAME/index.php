@@ -97,8 +97,14 @@ switch (ENVIRONMENT)
  * This variable must contain the name of your "system" directory.
  * Set the path if it is not in the same directory as this file.
  */
-	$system_path = '../CISystem/system';
-
+	$system_path = '../CISystem';
+/**
+ *---------------------------------------------------------------
+ * ROOT PATH
+ *---------------------------------------------------------------
+ * This variable is the name of your project root
+ */
+	$root_folder = 'CustomCI';
 /*
  *---------------------------------------------------------------
  * APPLICATION DIRECTORY NAME
@@ -114,7 +120,7 @@ switch (ENVIRONMENT)
  *
  * NO TRAILING SLASH!
  */
-	$application_folder = '../application_2';
+	$application_folder = '../AlgoritmaGenetika_APP';
 
 /*
  *---------------------------------------------------------------
@@ -234,6 +240,8 @@ switch (ENVIRONMENT)
 
 	// Name of the "system" directory
 	define('SYSDIR', basename(BASEPATH));
+
+	define('ROOTPATH',"http://".$_SERVER['HTTP_HOST']."/".$root_folder."/");
 
 	// The path to the "application" directory
 	if (is_dir($application_folder))

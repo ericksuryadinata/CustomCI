@@ -114,7 +114,7 @@ switch (ENVIRONMENT)
  *
  * NO TRAILING SLASH!
  */
-	$application_folder = 'Dashboard';
+	$application_folder = './Dashboard';
 
 /*
  *---------------------------------------------------------------

@@ -77,6 +77,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 								<table class="table table-striped table-responsive">
 									<thead>
 										<tr>
+											<th>GENERASI KE - </th>
 											<th>RAM</th>
 											<th>MOTHERBOARD</th>
 											<th>POWER SUPLY</th>
@@ -146,7 +147,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 											<th>POWER SUPLY</th>
 											<th>PROCESSOR</th>
 											<th>HARD DISK</th>
-											<th>FITNESS</th>
 										</tr>
 									</thead>
 									<tbody id="hasilRoullete">
@@ -170,7 +170,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 						</div>
 						<div id="collapse-probabilitas" class="collapse" role="tabpanel" aria-labelledby="heading-panel-right-one" data-parent="#accordion-panel-right">
 							<div class="card-body">
-								<table class="table table-striped">
+								<table class="table table-striped table-responsive">
 									<thead>
 										<tr>
 											<th>RAM</th>
@@ -199,7 +199,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 						</div>
 						<div id="collapse-kawin-silang" class="collapse" role="tabpanel" aria-labelledby="heading-panel-right-two" data-parent="#accordion-panel-right">
 							<div class="card-body">
-								<table class="table table-striped">
+								<table class="table table-striped table-responsive">
 									<thead>
 										<tr>
 											<th>RAM</th>
@@ -207,8 +207,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 											<th>POWER SUPLY</th>
 											<th>PROCESSOR</th>
 											<th>HARD DISK</th>
-											<th>PERSENTASE</th>
-											<th>ROULETTE</th>
 										</tr>
 									</thead>
 									<tbody id="hasilKawinSilang">
@@ -228,9 +226,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	<script src="<?php echo ROOTPATH.'assets/vendor/bootstrap/js/bootstrap.min.js';?>"></script>
 
 	<script>
-	// untuk harga digunakan perbandingan 1 : 10000
+
 	/**
 	 * STATIC VARIABEL
+	 * untuk harga digunakan perbandingan 1 : 10000
+	 * pastikan untuk setiap komponen mempunyai panjang yang sama
 	 */
 	var RAM = [40,45,47,56,58,62,72,73,80,91];
 	var MOTHERBOARD = [100,140,160,175,210,230,240,260,290,320];
@@ -239,14 +239,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	var HARD_DISK = [82,86,92,94,97,102,113,124,136,145];
 	var KOMPONEN = [RAM, MOTHERBOARD, POWER_SUPPLY, PROCESSOR, HARD_DISK];
 	var JUMLAH_KOMPONEN = 5;
-	var _FITNESS = 2000;
 
 	/**
 	 * Variabel yang digunakan untuk algoritma genetika
 	 */
-	var fitness = 0, totalBiaya = 0, fungsi_fitness = 0, induk;
+	var fitness = 0, total_biaya = 0, fungsi_fitness = 0, total_fitness = 0, persentasi_fitness = 0;
 	var random, hasil;
-	var hasilTerbaik = [], arr = [];
+	var hasil_terbaik = [], populasi_array = [], hasil_generasi_ke = [], roda_putar = [];
 
 	/**
 	 * Untuk melakukan seleksi dari indvidu yang telah dibangkitkan
@@ -254,7 +253,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	 * @return induk dipilih berdasarkan nilai fitness tertinggi
 	 */
 	function seleksi(individu){
-		induk = [];
+		var induk = [];
 		var check = 0;
 		for(var i = 0; i < individu.length; i++){
 			if(check <= parseInt(individu[i][5])){
@@ -289,16 +288,30 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	 */
 	function displayHargaTotal(populasi){
 		$("#tabelHargaTotal").empty();
-		for(var row = 0; row < 1; row++){
+		for(var row = 0; row < populasi.length; row++){
 			$("#tabelHargaTotal").append("<tr id=t"+row+"></tr>");
-			for(var i = 0; i < populasi.length; i++){
-				var id = "#tabelHargaTotal #t"+row;
-				var hasil = "<td>"+populasi[i]+"</td>";
-				$(id).append(hasil);
+		}
+		for(var row = 0; row < populasi.length; row++){
+			for(var col = 0; col <= populasi[row].length; col++){
+				if(col == 0){
+					var id = "#tabelHargaTotal #t"+row;
+					var hasil = "<td>"+row+"</td>";
+					$(id).append(hasil);
+				}else{
+					var id = "#tabelHargaTotal #t"+row;
+					var hasil = "<td>"+populasi[row][col-1]+"</td>";
+					$(id).append(hasil);
+				}
 			}
 		}
 	}
 
+	/**
+	 * Untuk mengetahui validitas dari input
+	 * @params varA inputan pertama
+	 * @params varB inputan kedua
+	 * @return TRUE jika inputan terisi semua, FALSE jika salah satu tidak diinput
+	 */
 	function checkInput(varA, varB){
 		if(varA.length == 0 || varB.length == 0){
 			return 'FALSE';
@@ -309,6 +322,19 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				return 'TRUE';
 			}
 		}
+	}
+
+	/**
+	 * Untuk menghitung total fitness
+	 * @params populasi populasi dari hasil generasi
+	 * @return total total fitness keseluruhan
+	 */
+	function totalFitness(populasi){
+		var total = 0;
+		for(var i = 0; i < populasi.length; i++){
+			total += parseFloat(populasi[i][5]);
+		}
+		return total;
 	}
 
 	/**
@@ -359,7 +385,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		 */
 		$("#bangkitkan").on('click', function () {
 			//step 1
-			arr = [];
+			populasi_array = [];
 
 			//step 2
 			var individu = $("#individu").val();
@@ -380,53 +406,152 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			//step 4
 			for(var j = 0; j < individu; j++){
 				//step 5
-				arr.push([]);
-				totalBiaya = 0;
+				populasi_array.push([]);
+				total_biaya = 0;
 				fitness = 0;
 				fungsi_fitness = 0;
 				//step 6
 				for(var k = 0; k < JUMLAH_KOMPONEN + 1; k++){
 					if(k == JUMLAH_KOMPONEN){ //step 9
 						// FUNGSI FITNESS
-						fungsi_fitness = 1 / (Math.abs(maksimal - totalBiaya) / maksimal);
-						arr[j].push(fungsi_fitness);
-						arr[j].push(totalBiaya);
-						hasil = "<td>"+fungsi_fitness+"</td><td>"+totalBiaya+"</td>";
+						fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
+						populasi_array[j].push(fungsi_fitness);
+						populasi_array[j].push(total_biaya);
+						hasil = "<td>"+fungsi_fitness+"</td><td>"+total_biaya+"</td>";
 						id = "#hasilGenerasi #"+j;
 						$(id).append(hasil);
 					}else{ //step 7
 						//step 8
 						random = Math.floor((Math.random() * 10) + 1); //random komponen
-						arr[j].push(random);
+						populasi_array[j].push(random);
 						hasil = "<td>"+random+"</td>";
 						id = "#hasilGenerasi #"+j;
 						$(id).append(hasil);
-						totalBiaya += parseInt(KOMPONEN[k][(parseInt(arr[j][k])-1)]);
+						total_biaya += parseInt(KOMPONEN[k][(parseInt(populasi_array[j][k])-1)]);
 					}
 				}
 			}
-			//console.log(arr);
-			hasilTerbaik = seleksi(arr);
-			console.log(hasilTerbaik);
-			displayHargaTotal(hasilTerbaik);
+			//console.log(populasi_array);
+			hasil_terbaik = seleksi(populasi_array);
+			hasil_generasi_ke.push(hasil_terbaik);
+			console.log(hasil_generasi_ke);
+			console.log(hasil_terbaik);
+			displayHargaTotal(hasil_generasi_ke);
 		});
 
 		/**
-		 * Flowchart untuk 
+		 * Flowchart untuk menghitung probabilitas dan roda putar
+		 * 1. Hitung total fitness
+		 * 2. Hitung persentasi fitness
+		 * 3. Representasikan persentasi fitness kedalam roda putar (roullete wheel)
 		 */
 
 		$("#doProbabilitas").on('click',function(){
-			console.log(arr);
+			var indeks = 0;
+			// step 1
+			total_fitness = totalFitness(populasi_array);
+			
+			for(var i = 0; i < populasi_array.length; i++){
+				// step 2
+				persentasi_fitness = Math.round(parseFloat(100 * populasi_array[i][5] / total_fitness));
+				populasi_array[i].push(persentasi_fitness);
+				// step 3
+				for(var j = 0; j < persentasi_fitness; j++){
+					roda_putar[indeks] = i;
+					indeks += 1;
+				}
+			}
+
+			$("#hasilProbabilitas").empty();
+			for(var row = 0; row < populasi_array.length; row++){
+				$("#hasilProbabilitas").append("<tr id=hp"+row+"></tr>");
+			}
+			for(var row = 0; row < populasi_array.length; row++){
+				for(var col = 0; col < populasi_array[row].length; col++){
+					if(col == 5 || col == 6){
+						
+					}else if(col == 7){
+						var id = "#hasilProbabilitas #hp"+row;
+						var hasil = "<td>"+populasi_array[row][col]+" % </td>";
+						$(id).append(hasil);
+					}else{
+						var id = "#hasilProbabilitas #hp"+row;
+						var hasil = "<td>"+populasi_array[row][col]+"</td>";
+						$(id).append(hasil);
+					}
+				}
+			}
+			// console.log(populasi_array);
+			$("#doProbabilitas").attr('disabled',true);
+			$("#data-probabilitas").trigger('click');
 		});
 
+		/**
+		 * Flowchart untuk melakukan seleksi
+		 * 1. Tampung hasil populasi sebelumnya, kosongkan populasi utama
+		 * 2. Random angka dari angka 1 - 100
+		 * 3. Pilih kromosom dari populasi tampung dengan indeks hasil roda_putar[random]
+		 * 4. Tampung hasilnya ke populasi Utama
+		 */
 		$("#doSeleksi").on('click',function(){
+			var kromosom_terpilih = [];
+			var random_seleksi = 0;
+			var populasi_tampung = [];
+
+			populasi_tampung = populasi_array;
+			populasi_array = [];
 			
+			$("#hasilProbabilitas").empty();
+			for(var row = 0; row < populasi_tampung.length; row++){
+				$("#hasilProbabilitas").append("<tr id=hp"+row+"></tr>");
+			}
+
+			for(var row = 0; row < populasi_tampung.length; row++){
+				random_seleksi = Math.floor((Math.random() * 100)); //random
+				kromosom_terpilih = roda_putar[random_seleksi];
+				populasi_array.push(populasi_tampung[kromosom_terpilih]);
+				for(var col = 0; col < populasi_tampung[row].length; col++){
+					if(col == 5 || col == 6){
+						
+					}else if(col == 7){
+						var id = "#hasilProbabilitas #hp"+row;
+						var hasil = "<td>"+populasi_tampung[row][col]+" % </td><td>"+kromosom_terpilih+"</td>";
+						$(id).append(hasil);
+					}else{
+						var id = "#hasilProbabilitas #hp"+row;
+						var hasil = "<td>"+populasi_tampung[row][col]+"</td>";
+						$(id).append(hasil);
+					}
+				}
+			}
+			console.log(populasi_array);
+
+			$("#hasilRoullete").empty();
+			for(var row = 0; row < populasi_array.length; row++){
+				$("#hasilRoullete").append("<tr id=hr"+row+"></tr>");
+			}
+
+			for(var row = 0; row < populasi_array.length; row++){
+				for(var col = 0; col < populasi_array[row].length; col++){
+					if(col == 5 || col == 6 || col == 7){
+						
+					}else{
+						var id = "#hasilRoullete #hr"+row;
+						var hasil = "<td>"+populasi_array[row][col]+"</td>";
+						$(id).append(hasil);
+					}
+				}
+			}
+
+			$("#data-roullete").trigger('click');
+			$("#doSeleksi").attr('disabled',true);
 		});
 
 		$("#doKawinSilang").on('click',function(){
 			
 		});
 
+		// TODO : untuk variabel hasil_generasi_ke masukkan kesini
 		$("#doMutasi").on('click',function(){
 			
 		});

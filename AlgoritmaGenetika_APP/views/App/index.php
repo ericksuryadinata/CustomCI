@@ -18,10 +18,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					<div class="form-group col-md-6 col-sm-6 col-xs-12">
 						<label for="individu">Populasi : </label>
 						<input type="text" class="form-control" name="individu" id="individu">
-						<span class="help-block"></span>
 					</div>
 					<div class="form-group col-md-6 col-sm-6 col-xs-12">
-					<label for="harga">Harga Maksimal : </label>
+					<label for="harga">Harga Mendekati : </label>
 						<input type="text" class="form-control" name="hargamaks" id="hargamaks" placeholder="lebih besar 6.000.000">
 					</div>
 				</div>
@@ -264,12 +263,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	 * @params maksimal harga maksimal permintaan
 	 * @return induk dipilih berdasarkan nilai fitness tertinggi
 	 */
-	function seleksi(individu, maksimal){
+	function seleksi(individu){
 		var induk = [];
 		var check = 0;
 		for(var i = 0; i < individu.length; i++){
 			// check apakah fitnessnya lebih besar dan total harga komponen lebih kecil sama dengan harga maksimal
-			if( check <= parseInt(individu[i][5]) && maksimal >= parseInt(individu[i][6]) ){
+			if( check <= parseInt(individu[i][5]) ){
 				check = parseInt(individu[i][5]);
 				induk = individu[i];
 			}
@@ -446,7 +445,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			}
 			console.log(populasi_array);
 			//console.log(populasi_array);
-			hasil_terbaik = seleksi(populasi_array, maksimal);
+			hasil_terbaik = seleksi(populasi_array);
 			hasil_generasi_ke.push(hasil_terbaik);
 			console.log(hasil_generasi_ke);
 			console.log(hasil_terbaik);
@@ -543,7 +542,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					}
 				}
 			}
-			console.log(populasi_array);
 
 			// hasil dari roullete ditampilkan kedalam tabel roullete
 			$("#hasilRoullete").empty();
@@ -554,7 +552,6 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			for(var row = 0; row < populasi_array.length; row++){
 				for(var col = 0; col < populasi_array[row].length; col++){
 					if(col == 5 || col == 6 || col == 7){
-						
 					}else{
 						var id = "#hasilRoullete #hr"+row;
 						var hasil = "<td>"+populasi_array[row][col]+"</td>";
@@ -562,41 +559,70 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					}
 				}
 			}
-
 			$("#data-roullete").trigger('click');
 			$("#doSeleksi").attr('disabled',true);
 		});
 
 		$("#doKawinSilang").on('click',function(){
 			var probabilitas_kawin_silang = $("#probcrossover").val() / 100;
-			console.log(populasi_array[0]);
-			var random = 0;
+			console.log(populasi_array);
+			var random = 0, tampung_nomor = 0, tampung_pertama = 0, tampung_kedua = 0;
 			var kawin_silang = [];
 			var nomor_kawin_silang = [];
 			var cut_point_pertama = 0, cut_point_kedua = 0;
-			var tampung_nomor = 0;
+
 			for(var i = 0; i < populasi_array.length; i++){
 				random = Math.random();
-				console.log(random);
 				if(random < probabilitas_kawin_silang){
 					nomor_kawin_silang.push(i);
 				}
 			}
 			console.log(nomor_kawin_silang);
-			// if(nomor_kawin_silang.length == 0){
+			if(nomor_kawin_silang.length == 0){
 
-			// }else{
-			// 	tampung_nomor = nomor_kawin_silang[0];
-			// 	for(var i = 0; i < nomor_kawin_silang.length; i++){
-			// 		cut_point_pertama = Math.floor(Math.random() * JUMLAH_KOMPONEN);
-			// 		cut_point_kedua = Math.floor(Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama) + cut_point_pertama);
-			// 		console.log("c1 "+cut_point_pertama);
-			// 		console.log("c2 "+cut_point_kedua);
-			// 		for(; cut_point_pertama <= cut_point_kedua; cut_point_pertama++){
-			// 			console.log("anu "+i);
-			// 		}
-			// 	}
-			// }
+			}else if(nomor_kawin_silang.length == 1){
+
+			}else{
+				tampung_nomor = nomor_kawin_silang[0];
+				for(var i = 0; i < nomor_kawin_silang.length; i++){
+					cut_point_pertama = Math.floor((Math.random() * JUMLAH_KOMPONEN));
+					cut_point_kedua = Math.floor((Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama)) + cut_point_pertama);
+					console.log(cut_point_pertama);
+					console.log(cut_point_kedua);
+					if(i == nomor_kawin_silang.length - 1){
+						console.log("sama");
+						tampung_pertama = (populasi_array[nomor_kawin_silang[i]][cut_point_pertama]);
+						tampung_kedua = (populasi_array[tampung_nomor][cut_point_kedua]);
+						console.log("sebelum");
+						console.log(populasi_array[nomor_kawin_silang[i]]);
+						console.log(tampung_pertama);
+						console.log(populasi_array[tampung_nomor]);
+						console.log(tampung_kedua);
+						console.log("sesudah");
+						populasi_array[nomor_kawin_silang[tampung_nomor]][cut_point_kedua] = tampung_pertama;
+						console.log(populasi_array[nomor_kawin_silang[tampung_nomor]]);
+						populasi_array[nomor_kawin_silang[i]][cut_point_pertama] = tampung_kedua;
+						console.log(populasi_array[nomor_kawin_silang[i]]);
+					}else{
+						console.log("lanjut");
+						tampung_pertama = (populasi_array[nomor_kawin_silang[i]][cut_point_pertama]);
+						tampung_kedua = (populasi_array[nomor_kawin_silang[i+1]][cut_point_kedua]);
+						console.log("sebelum");
+						console.log(populasi_array[nomor_kawin_silang[i]]);
+						console.log(tampung_pertama);
+						console.log(populasi_array[nomor_kawin_silang[i+1]]);
+						console.log(tampung_kedua);
+						console.log("sesudah");
+						populasi_array[nomor_kawin_silang[i+1]][cut_point_kedua] = tampung_pertama;
+						console.log(populasi_array[nomor_kawin_silang[i+1]]);
+						populasi_array[nomor_kawin_silang[i]][cut_point_pertama] = tampung_kedua;
+						console.log(populasi_array[nomor_kawin_silang[i]]);
+						
+					}
+					// console.log(populasi_array[nomor_kawin_silang[i]]);
+					
+				}
+			}
 			// console.log(cut_point);
 		});
 

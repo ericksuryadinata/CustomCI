@@ -26,6 +26,17 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					</div>
 				</div>
 				<div class="form-row">
+					<div class="form-group col-md-6 col-sm-6 col-xs-12">
+						<label for="probcross">Probabilitas Kawin Silang : </label>
+						<input type="text" class="form-control" name="probcros" id="probcrossover">
+						<span class="help-block"></span>
+					</div>
+					<div class="form-group col-md-6 col-sm-6 col-xs-12">
+					<label for="probmut">Probabilitas Mutasi : </label>
+						<input type="text" class="form-control" name="probmut" id="probmutasi">
+					</div>
+				</div>
+				<div class="form-row">
 					<div class="col-md-4 col-sm-4 col-xs-12">
 						<button type="submit" class="btn btn-primary" id="bangkitkan">Bangkitkan Populasi</button>
 					</div>
@@ -250,13 +261,15 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	/**
 	 * Untuk melakukan seleksi dari indvidu yang telah dibangkitkan
 	 * @params individu individu yang dibangkitkan
+	 * @params maksimal harga maksimal permintaan
 	 * @return induk dipilih berdasarkan nilai fitness tertinggi
 	 */
-	function seleksi(individu){
+	function seleksi(individu, maksimal){
 		var induk = [];
 		var check = 0;
 		for(var i = 0; i < individu.length; i++){
-			if(check <= parseInt(individu[i][5])){
+			// check apakah fitnessnya lebih besar dan total harga komponen lebih kecil sama dengan harga maksimal
+			if( check <= parseInt(individu[i][5]) && maksimal >= parseInt(individu[i][6]) ){
 				check = parseInt(individu[i][5]);
 				induk = individu[i];
 			}
@@ -431,8 +444,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					}
 				}
 			}
+			console.log(populasi_array);
 			//console.log(populasi_array);
-			hasil_terbaik = seleksi(populasi_array);
+			hasil_terbaik = seleksi(populasi_array, maksimal);
 			hasil_generasi_ke.push(hasil_terbaik);
 			console.log(hasil_generasi_ke);
 			console.log(hasil_terbaik);
@@ -462,6 +476,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				}
 			}
 
+			// tampilkan kedalam tabel hasil probabilitas
 			$("#hasilProbabilitas").empty();
 			for(var row = 0; row < populasi_array.length; row++){
 				$("#hasilProbabilitas").append("<tr id=hp"+row+"></tr>");
@@ -498,6 +513,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			var random_seleksi = 0;
 			var populasi_tampung = [];
 
+			// step 1
 			populasi_tampung = populasi_array;
 			populasi_array = [];
 			
@@ -507,8 +523,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			}
 
 			for(var row = 0; row < populasi_tampung.length; row++){
+				// step 2
 				random_seleksi = Math.floor((Math.random() * 100)); //random
+				// step 3
 				kromosom_terpilih = roda_putar[random_seleksi];
+				// step 4
 				populasi_array.push(populasi_tampung[kromosom_terpilih]);
 				for(var col = 0; col < populasi_tampung[row].length; col++){
 					if(col == 5 || col == 6){
@@ -526,6 +545,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			}
 			console.log(populasi_array);
 
+			// hasil dari roullete ditampilkan kedalam tabel roullete
 			$("#hasilRoullete").empty();
 			for(var row = 0; row < populasi_array.length; row++){
 				$("#hasilRoullete").append("<tr id=hr"+row+"></tr>");
@@ -548,7 +568,36 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		});
 
 		$("#doKawinSilang").on('click',function(){
-			
+			var probabilitas_kawin_silang = $("#probcrossover").val() / 100;
+			console.log(populasi_array[0]);
+			var random = 0;
+			var kawin_silang = [];
+			var nomor_kawin_silang = [];
+			var cut_point_pertama = 0, cut_point_kedua = 0;
+			var tampung_nomor = 0;
+			for(var i = 0; i < populasi_array.length; i++){
+				random = Math.random();
+				console.log(random);
+				if(random < probabilitas_kawin_silang){
+					nomor_kawin_silang.push(i);
+				}
+			}
+			console.log(nomor_kawin_silang);
+			// if(nomor_kawin_silang.length == 0){
+
+			// }else{
+			// 	tampung_nomor = nomor_kawin_silang[0];
+			// 	for(var i = 0; i < nomor_kawin_silang.length; i++){
+			// 		cut_point_pertama = Math.floor(Math.random() * JUMLAH_KOMPONEN);
+			// 		cut_point_kedua = Math.floor(Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama) + cut_point_pertama);
+			// 		console.log("c1 "+cut_point_pertama);
+			// 		console.log("c2 "+cut_point_kedua);
+			// 		for(; cut_point_pertama <= cut_point_kedua; cut_point_pertama++){
+			// 			console.log("anu "+i);
+			// 		}
+			// 	}
+			// }
+			// console.log(cut_point);
 		});
 
 		// TODO : untuk variabel hasil_generasi_ke masukkan kesini

@@ -508,6 +508,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		 * 4. Tampung hasilnya ke populasi Utama
 		 */
 		$("#doSeleksi").on('click',function(){
+			console.log("prob");
+			console.log(populasi_array);
 			var kromosom_terpilih = [];
 			var random_seleksi = 0;
 			var populasi_tampung = [];
@@ -561,74 +563,78 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			}
 			$("#data-roullete").trigger('click');
 			$("#doSeleksi").attr('disabled',true);
-		});
-
-		$("#doKawinSilang").on('click',function(){
-			var probabilitas_kawin_silang = $("#probcrossover").val() / 100;
+			console.log("seleksi");
 			console.log(populasi_array);
-			var random = 0, tampung_nomor = 0, tampung_pertama = 0, tampung_kedua = 0;
-			var kawin_silang = [];
-			var nomor_kawin_silang = [];
-			var cut_point_pertama = 0, cut_point_kedua = 0;
+		});	
 
-			for(var i = 0; i < populasi_array.length; i++){
-				random = Math.random();
-				if(random < probabilitas_kawin_silang){
-					nomor_kawin_silang.push(i);
+		$("#doKawinSilang").on('click',function(e){
+			e.preventDefault();
+			console.log("kawin");
+			console.log(populasi_array);
+			var probabilitas_kawin_silang = $("#probcrossover").val() / 100;
+			var random_kawin = 0;
+			var cut_point_pertama = 0, cut_point_kedua = 0,tampung_gen = 0;
+			var populasi_tampung_kawin = [], populasi_terpilih = [], nomor_terpilih = [], populasi_tampung_terpilih = [];
+			populasi_tampung_kawin = populasi_array;
+			populasi_array = [];
+			for(var i = 1; i < populasi_tampung_kawin.length; i++){
+				random_kawin = Math.random();
+				if(random_kawin < probabilitas_kawin_silang){
+					nomor_terpilih.push(i);
+					populasi_terpilih.push(populasi_tampung_kawin[i]);
 				}
 			}
-			console.log(nomor_kawin_silang);
-			if(nomor_kawin_silang.length == 0){
-
-			}else if(nomor_kawin_silang.length == 1){
+			console.log(nomor_terpilih);
+			console.log(populasi_terpilih);
+			console.log(populasi_tampung_kawin);
+			if(populasi_terpilih.length == 0 || populasi_terpilih.length == 1){
 
 			}else{
-				tampung_nomor = nomor_kawin_silang[0];
-				for(var i = 0; i < nomor_kawin_silang.length; i++){
-					cut_point_pertama = Math.floor((Math.random() * JUMLAH_KOMPONEN));
-					cut_point_kedua = Math.floor((Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama)) + cut_point_pertama);
+				for(var terpilih = 1; terpilih < populasi_terpilih.length; terpilih++){
+					cut_point_pertama = Math.floor(Math.random() * JUMLAH_KOMPONEN);
+					cut_point_kedua = Math.floor(Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama)) + cut_point_pertama;
 					console.log(cut_point_pertama);
 					console.log(cut_point_kedua);
-					if(i == nomor_kawin_silang.length - 1){
-						console.log("sama");
-						tampung_pertama = (populasi_array[nomor_kawin_silang[i]][cut_point_pertama]);
-						tampung_kedua = (populasi_array[tampung_nomor][cut_point_kedua]);
-						console.log("sebelum");
-						console.log(populasi_array[nomor_kawin_silang[i]]);
-						console.log(tampung_pertama);
-						console.log(populasi_array[tampung_nomor]);
-						console.log(tampung_kedua);
-						console.log("sesudah");
-						populasi_array[nomor_kawin_silang[tampung_nomor]][cut_point_kedua] = tampung_pertama;
-						console.log(populasi_array[nomor_kawin_silang[tampung_nomor]]);
-						populasi_array[nomor_kawin_silang[i]][cut_point_pertama] = tampung_kedua;
-						console.log(populasi_array[nomor_kawin_silang[i]]);
-					}else{
-						console.log("lanjut");
-						tampung_pertama = (populasi_array[nomor_kawin_silang[i]][cut_point_pertama]);
-						tampung_kedua = (populasi_array[nomor_kawin_silang[i+1]][cut_point_kedua]);
-						console.log("sebelum");
-						console.log(populasi_array[nomor_kawin_silang[i]]);
-						console.log(tampung_pertama);
-						console.log(populasi_array[nomor_kawin_silang[i+1]]);
-						console.log(tampung_kedua);
-						console.log("sesudah");
-						populasi_array[nomor_kawin_silang[i+1]][cut_point_kedua] = tampung_pertama;
-						console.log(populasi_array[nomor_kawin_silang[i+1]]);
-						populasi_array[nomor_kawin_silang[i]][cut_point_pertama] = tampung_kedua;
-						console.log(populasi_array[nomor_kawin_silang[i]]);
-						
+					for(var cut_point = cut_point_pertama; cut_point <= cut_point_kedua; cut_point++){
+						tampung_gen = populasi_terpilih[terpilih-1][cut_point];
+						populasi_terpilih[terpilih - 1][cut_point] = populasi_terpilih[terpilih][cut_point];
+						populasi_terpilih[terpilih][cut_point] = tampung_gen;
 					}
-					// console.log(populasi_array[nomor_kawin_silang[i]]);
-					
+					console.log(populasi_terpilih[terpilih - 1]);
+					console.log(populasi_terpilih[terpilih]);
 				}
 			}
+			console.log(populasi_terpilih);
+			for(var q = 0; q < populasi_tampung_kawin.length; q++){
+				for(var f = 0; f < nomor_terpilih.length; f++){
+					if(nomor_terpilih[f] == q){
+						populasi_array.push(populasi_terpilih[f]);
+						break;
+					}
+				}
+			}
+
+			console.log(populasi_array);
+			$("#hasilKawinSilang").empty();
+			for(var row = 0; row < populasi_array.length; row++){
+				$("#hasilKawinSilang").append("<tr id=hks"+row+"></tr>");
+			}
+
+			for(var row = 0; row < populasi_array.length; row++){
+				for(var col = 0; col < populasi_array[row].length; col++){
+					var id = "#hasilKawinSilang #hks"+row;
+					var hasil = "<td>"+populasi_array[row][col]+"</td>";
+					$(id).append(hasil);
+				}
+			}
+			$("#data-kawin-silang").trigger('click');
+			// $("#doKawinSilang").attr('disabled',true);
 			// console.log(cut_point);
 		});
 
 		// TODO : untuk variabel hasil_generasi_ke masukkan kesini
 		$("#doMutasi").on('click',function(){
-			
+			console.log(populasi_array);
 		});
 	});
 	</script>

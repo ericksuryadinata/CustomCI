@@ -241,6 +241,7 @@ switch (ENVIRONMENT)
 	// Name of the "system" directory
 	define('SYSDIR', basename(BASEPATH));
 
+	// Name of the "Root" directory
 	define('ROOTPATH',"http://".$_SERVER['HTTP_HOST']."/".$root_folder."/");
 
 	// The path to the "application" directory

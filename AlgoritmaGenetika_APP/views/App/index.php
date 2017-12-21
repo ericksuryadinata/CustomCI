@@ -134,6 +134,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 									</thead>
 									<tbody id="hasilGenerasi">
 									</tbody>
+									<div id="rodaPutar">
+									</div>
+									<div id="persentasiPopulasi">
+									</div>
 								</table>
 								<button id="doProbabilitas" type="submit" class="btn btn-primary" >Hitung Probabilitas Roullete</button>
 							</div>
@@ -161,6 +165,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 									</thead>
 									<tbody id="hasilRoullete">
 									</tbody>
+									<div id="hasilRoulleteTemp">
+									</div>
 								</table>
 								<button id="doKawinSilang" type="submit" class="btn btn-primary" >Lakukan Kawin Silang</button>
 							</div>
@@ -236,59 +242,34 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	<script src="<?php echo ROOTPATH.'assets/vendor/bootstrap/js/bootstrap.min.js';?>"></script>
 
 	<script>
-
+	'use strict';
 	/**
 	 * STATIC VARIABEL
 	 * untuk harga digunakan perbandingan 1 : 10000
 	 * pastikan untuk setiap komponen mempunyai panjang yang sama
 	 */
-	var RAM = [40,45,47,56,58,62,72,73,80,91];
-	var MOTHERBOARD = [100,140,160,175,210,230,240,260,290,320];
-	var POWER_SUPPLY = [41,43,46,58,65,66,70,78,83,85];
-	var PROCESSOR = [300,375,450,480,510,525,560,589,611,643];
-	var HARD_DISK = [82,86,92,94,97,102,113,124,136,145];
-	var KOMPONEN = [RAM, MOTHERBOARD, POWER_SUPPLY, PROCESSOR, HARD_DISK];
-	var JUMLAH_KOMPONEN = 5;
-
-	/**
-	 * Variabel yang digunakan untuk algoritma genetika
-	 */
-	var fitness = 0, total_biaya = 0, fungsi_fitness = 0, total_fitness = 0, persentasi_fitness = 0;
-	var random, hasil;
-	var hasil_terbaik = [], populasi_array = [], hasil_generasi_ke = [], roda_putar = [];
-
-	/**
-	 * Untuk melakukan seleksi dari indvidu yang telah dibangkitkan
-	 * @params individu individu yang dibangkitkan
-	 * @params maksimal harga maksimal permintaan
-	 * @return induk dipilih berdasarkan nilai fitness tertinggi
-	 */
-	function seleksi(individu){
-		var induk = [];
-		var check = 0;
-		for(var i = 0; i < individu.length; i++){
-			// check apakah fitnessnya lebih besar dan total harga komponen lebih kecil sama dengan harga maksimal
-			if( check <= parseInt(individu[i][5]) ){
-				check = parseInt(individu[i][5]);
-				induk = individu[i];
-			}
-		}
-		return induk;
-	}
+	const RAM = [40,45,47,56,58,62,72,73,80,91];
+	const MOTHERBOARD = [100,140,160,175,210,230,240,260,290,320];
+	const POWER_SUPPLY = [41,43,46,58,65,66,70,78,83,85];
+	const PROCESSOR = [300,375,450,480,510,525,560,589,611,643];
+	const HARD_DISK = [82,86,92,94,97,102,113,124,136,145];
+	const KOMPONEN = [RAM, MOTHERBOARD, POWER_SUPPLY, PROCESSOR, HARD_DISK];
+	const JUMLAH_KOMPONEN = 5;
 
 	/**
 	 * Untuk menampilkan harga
 	 * @target tbody id=tabelHarga
 	 */
 	function displayHarga(){
+		let row, i, j, id, hasil;
 		$("#tabelHarga").empty();
-		for(var row = 0; row < KOMPONEN[0].length; row++){
+		for(row = 0; row < KOMPONEN[0].length; row++){
 			$("#tabelHarga").append("<tr id=h"+row+"><td>"+(row+1)+"</td></tr>");
 		}
-		for(var i = 0; i < KOMPONEN[0].length; i++){
-			for(var j =  0; j < KOMPONEN.length; j++){
-				var id = "#tabelHarga #h"+i;
-				var hasil = "<td>"+KOMPONEN[j][i]+"</td>";
+		for(i = 0; i < KOMPONEN[0].length; i++){
+			for(j =  0; j < KOMPONEN.length; j++){
+				id = "#tabelHarga #h"+i;
+				hasil = "<td>"+KOMPONEN[j][i]+"</td>";
 				$(id).append(hasil);
 			}
 		}
@@ -299,19 +280,20 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	 * @target tbody id=tabelHargaTotal
 	 */
 	function displayHargaTotal(populasi){
+		let row, col, id, hasil;
 		$("#tabelHargaTotal").empty();
-		for(var row = 0; row < populasi.length; row++){
+		for(row = 0; row < populasi.length; row++){
 			$("#tabelHargaTotal").append("<tr id=t"+row+"></tr>");
 		}
-		for(var row = 0; row < populasi.length; row++){
-			for(var col = 0; col <= populasi[row].length; col++){
+		for(row = 0; row < populasi.length; row++){
+			for(col = 0; col <= populasi[row].length; col++){
 				if(col == 0){
-					var id = "#tabelHargaTotal #t"+row;
-					var hasil = "<td>"+row+"</td>";
+					id = "#tabelHargaTotal #t"+row;
+					hasil = "<td>"+row+"</td>";
 					$(id).append(hasil);
 				}else{
-					var id = "#tabelHargaTotal #t"+row;
-					var hasil = "<td>"+populasi[row][col-1]+"</td>";
+					id = "#tabelHargaTotal #t"+row;
+					hasil = "<td>"+populasi[row][col-1]+"</td>";
 					$(id).append(hasil);
 				}
 			}
@@ -337,16 +319,56 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	}
 
 	/**
+	 * Untuk melakukan seleksi dari indvidu yang telah dibangkitkan
+	 * @params individu individu yang dibangkitkan
+	 * @params maksimal harga maksimal permintaan
+	 * @return induk dipilih berdasarkan nilai fitness tertinggi
+	 */
+	function seleksi(individu){
+		let induk = [],check = 0, i;
+		for(i = 0; i < individu.length; i++){
+			// check apakah fitnessnya lebih besar dan total harga komponen lebih kecil sama dengan harga maksimal
+			if( check <= parseInt(individu[i][5]) ){
+				check = parseInt(individu[i][5]);
+				induk = individu[i];
+			}
+		}
+		return induk;
+	}
+
+	/**
 	 * Untuk menghitung total fitness
 	 * @params populasi populasi dari hasil generasi
 	 * @return total total fitness keseluruhan
 	 */
 	function totalFitness(populasi){
-		var total = 0;
-		for(var i = 0; i < populasi.length; i++){
+		let total = 0, i;
+		for(i = 0; i < populasi.length; i++){
 			total += parseFloat(populasi[i][5]);
 		}
 		return total;
+	}
+
+	function generasiRandom(individu, maksimal) {  
+		let populasi_array, j, k, random, fungsi_fitness, total_biaya;
+		populasi_array = [];
+		for(j = 0; j < individu; j++){
+			populasi_array.push([]);
+			total_biaya = 0;
+			fungsi_fitness = 0;
+			for(k = 0; k < JUMLAH_KOMPONEN + 1; k++){
+				if(k == JUMLAH_KOMPONEN){
+					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
+					populasi_array[j].push(fungsi_fitness);
+					populasi_array[j].push(total_biaya);
+				}else{
+					random = Math.floor((Math.random() * 10) + 1);
+					populasi_array[j].push(random);
+					total_biaya += parseInt(KOMPONEN[k][(parseInt(populasi_array[j][k])-1)]);
+				}
+			}
+		}
+		return populasi_array;
 	}
 
 	/**
@@ -382,92 +404,47 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			}
 		});
 
-		/**
-		 * Flowchart pada saat bangkitkan populasi
-		 * 1. Siapkan array untuk menampung data
-		 * 2. Baca inputan dari individu dan harga maksimal, untuk harga maksimal kita samakan dengan harga komponen
-		 * 3. Kosongkan tabel hasil generasi
-		 * 4. Lakukan perulangan hingga batas individu
-		 * 5. Siapkan array lagi didalam array yang telah diinisialisasi, kosongkan semua variabel yang digunakan
-		 * 6. Lakukan perulangan hingga batas komponen
-		 * 7. Jika indeks tidak sama dengan jumlah komponen, lakukan random angka untuk mendapatkan gen
-		 * 8. Tampung hasil random tersebut kedalam array kedua, lakukan perhitungan total biaya
-		 * 9. Jika indeks sama dengan jumlah komponen, lakukan perhitungan untuk mengetahui fungsi fitness nya
-		 * 10. Tampilkan hasil bangkitkan ke dalam tabel hasil generasi
-		 */
 		$("#bangkitkan").on('click', function () {
-			//step 1
-			populasi_array = [];
-
-			//step 2
-			var individu = $("#individu").val();
-			var maksimal = $("#hargamaks").val() / 10000; // dibagi sepuluh ribu, karena komponen juga dalam perbandingan 1 : 1000
-
-			//step 3
+			let i, populasi_bangkit = [], row, col, id, hasil;
+			let individu = $("#individu").val();
+			let maksimal = $("#hargamaks").val() / 10000; // dibagi sepuluh ribu, karena komponen juga dalam perbandingan 1 : 1000
+			console.log("awal bangkitkan");
+			console.log(populasi_bangkit);
+			populasi_bangkit = generasiRandom(individu, maksimal);
 			$("#hasilGenerasi").empty();
 
-			for(var i = 0; i < individu; i++){
-				$("#hasilGenerasi").append("<tr id="+i+"></tr>");
+			for(i = 0; i < individu; i++){
+				$("#hasilGenerasi").append("<tr id=hg"+i+"></tr>");
 			}
-			
-			/**
-			 * Contoh array yang tercipta dari komponen adalah sebagai berikut
-			 * KOMPONEN = [[1,2,3,4],[1,2,3,4]];
-			 */
 
-			//step 4
-			for(var j = 0; j < individu; j++){
-				//step 5
-				populasi_array.push([]);
-				total_biaya = 0;
-				fitness = 0;
-				fungsi_fitness = 0;
-				//step 6
-				for(var k = 0; k < JUMLAH_KOMPONEN + 1; k++){
-					if(k == JUMLAH_KOMPONEN){ //step 9
-						// FUNGSI FITNESS
-						fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
-						populasi_array[j].push(fungsi_fitness);
-						populasi_array[j].push(total_biaya);
-						hasil = "<td>"+fungsi_fitness+"</td><td>"+total_biaya+"</td>";
-						id = "#hasilGenerasi #"+j;
-						$(id).append(hasil);
-					}else{ //step 7
-						//step 8
-						random = Math.floor((Math.random() * 10) + 1); //random komponen
-						populasi_array[j].push(random);
-						hasil = "<td>"+random+"</td>";
-						id = "#hasilGenerasi #"+j;
-						$(id).append(hasil);
-						total_biaya += parseInt(KOMPONEN[k][(parseInt(populasi_array[j][k])-1)]);
-					}
+			for(row = 0; row < populasi_bangkit.length; row++){
+				for(col = 0; col < populasi_bangkit[row].length; col++){
+					id = "#hasilGenerasi #hg"+row;
+					hasil = "<td>"+populasi_bangkit[row][col]+"</td>";
+					$(id).append(hasil);
 				}
 			}
-			console.log(populasi_array);
-			//console.log(populasi_array);
-			hasil_terbaik = seleksi(populasi_array);
-			hasil_generasi_ke.push(hasil_terbaik);
-			console.log(hasil_generasi_ke);
-			console.log(hasil_terbaik);
-			displayHargaTotal(hasil_generasi_ke);
+			
+			$("#hasilGenerasi").data(populasi_bangkit);
+			console.log("akhir bangkitkan");
+			console.log(populasi_bangkit);
 		});
 
-		/**
-		 * Flowchart untuk menghitung probabilitas dan roda putar
-		 * 1. Hitung total fitness
-		 * 2. Hitung persentasi fitness
-		 * 3. Representasikan persentasi fitness kedalam roda putar (roullete wheel)
-		 */
-
 		$("#doProbabilitas").on('click',function(){
-			var indeks = 0;
+			let indeks = 0, i, persentasi_populasi = [], row, col, id, hasil;
+			let populasi_bangkit_probabilitas = [], total_fitness = 0, persentasi_fitness = 0, roda_putar = [];
+			populasi_bangkit_probabilitas = $.map( $("#hasilGenerasi").data(),function(value, index){
+				return [value];
+			});
+			console.log("awal probabilitas");
+			console.log(populasi_bangkit_probabilitas);
 			// step 1
-			total_fitness = totalFitness(populasi_array);
+			total_fitness = totalFitness(populasi_bangkit_probabilitas);
 			
-			for(var i = 0; i < populasi_array.length; i++){
+			for(i = 0; i < populasi_bangkit_probabilitas.length; i++){
 				// step 2
-				persentasi_fitness = Math.round(parseFloat(100 * populasi_array[i][5] / total_fitness));
-				populasi_array[i].push(persentasi_fitness);
+				persentasi_fitness = Math.round(parseFloat(100 * populasi_bangkit_probabilitas[i][5] / total_fitness));
+				persentasi_populasi.push(persentasi_fitness);
 				// step 3
 				for(var j = 0; j < persentasi_fitness; j++){
 					roda_putar[indeks] = i;
@@ -477,25 +454,30 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 			// tampilkan kedalam tabel hasil probabilitas
 			$("#hasilProbabilitas").empty();
-			for(var row = 0; row < populasi_array.length; row++){
+			for(row = 0; row < populasi_bangkit_probabilitas.length; row++){
 				$("#hasilProbabilitas").append("<tr id=hp"+row+"></tr>");
 			}
-			for(var row = 0; row < populasi_array.length; row++){
-				for(var col = 0; col < populasi_array[row].length; col++){
-					if(col == 5 || col == 6){
-						
-					}else if(col == 7){
-						var id = "#hasilProbabilitas #hp"+row;
-						var hasil = "<td>"+populasi_array[row][col]+" % </td>";
+			for(row = 0; row < populasi_bangkit_probabilitas.length; row++){
+				for(col = 0; col < populasi_bangkit_probabilitas[row].length; col++){
+					if(col == 5){
+						id = "#hasilProbabilitas #hp"+row;
+						hasil = "<td>"+persentasi_populasi[row]+" %</td>";
 						$(id).append(hasil);
+					}else if(col == 6){
+
 					}else{
-						var id = "#hasilProbabilitas #hp"+row;
-						var hasil = "<td>"+populasi_array[row][col]+"</td>";
+						id = "#hasilProbabilitas #hp"+row;
+						hasil = "<td>"+populasi_bangkit_probabilitas[row][col]+"</td>";
 						$(id).append(hasil);
 					}
 				}
 			}
-			// console.log(populasi_array);
+
+			$("#hasilProbabilitas").data(populasi_bangkit_probabilitas);
+			$("#rodaPutar").data(roda_putar);
+			$("#persentasiPopulasi").data(persentasi_populasi);
+			console.log("akhir probabilitas");
+			console.log(populasi_bangkit_probabilitas);
 			$("#doProbabilitas").attr('disabled',true);
 			$("#data-probabilitas").trigger('click');
 		});
@@ -508,128 +490,144 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		 * 4. Tampung hasilnya ke populasi Utama
 		 */
 		$("#doSeleksi").on('click',function(){
-			console.log("prob");
-			console.log(populasi_array);
-			var kromosom_terpilih = [];
-			var random_seleksi = 0;
-			var populasi_tampung = [];
+			let populasi_bangkit_seleksi = [], populasi_bangkit_seleksi_temp = [], populasi_tampung_seleksi = [], row, col, random_seleksi = 0, kromosom_terpilih = 0;
+			let roda_putar = [], id = 0, hasil, persentasi_seleksi = [];
+			populasi_tampung_seleksi = $.map( $("#hasilProbabilitas").data(),function(value, index){
+				return [value];
+			});
+			roda_putar = $.map( $("#rodaPutar").data(),function(value, index){
+				return [value];
+			});
+			persentasi_seleksi = $.map( $("#persentasiPopulasi").data(),function(value, index){
+				return [value];
+			});
+			console.log("awal seleksi menggunakan populasi tampung");
+			console.log(populasi_tampung_seleksi);
+			console.log(roda_putar);
 
-			// step 1
-			populasi_tampung = populasi_array;
-			populasi_array = [];
-			
 			$("#hasilProbabilitas").empty();
-			for(var row = 0; row < populasi_tampung.length; row++){
+			for(row = 0; row < populasi_tampung_seleksi.length; row++){
 				$("#hasilProbabilitas").append("<tr id=hp"+row+"></tr>");
 			}
 
-			for(var row = 0; row < populasi_tampung.length; row++){
+			for(row = 0; row < populasi_tampung_seleksi.length; row++){
 				// step 2
 				random_seleksi = Math.floor((Math.random() * 100)); //random
 				// step 3
 				kromosom_terpilih = roda_putar[random_seleksi];
 				// step 4
-				populasi_array.push(populasi_tampung[kromosom_terpilih]);
-				for(var col = 0; col < populasi_tampung[row].length; col++){
-					if(col == 5 || col == 6){
-						
-					}else if(col == 7){
-						var id = "#hasilProbabilitas #hp"+row;
-						var hasil = "<td>"+populasi_tampung[row][col]+" % </td><td>"+kromosom_terpilih+"</td>";
+				populasi_bangkit_seleksi[row] = $.map(populasi_tampung_seleksi[kromosom_terpilih],function(value, index){
+					return [value];
+				});
+				for(col = 0; col < populasi_tampung_seleksi[row].length; col++){
+					if(col == 5){
+						id = "#hasilProbabilitas #hp"+row;
+						hasil = "<td>"+persentasi_seleksi[row]+" %</td>";
+						$(id).append(hasil);
+					}else if(col == 6){
+						id = "#hasilProbabilitas #hp"+row;
+						hasil = "<td>"+kromosom_terpilih+"</td>";
 						$(id).append(hasil);
 					}else{
-						var id = "#hasilProbabilitas #hp"+row;
-						var hasil = "<td>"+populasi_tampung[row][col]+"</td>";
+						id = "#hasilProbabilitas #hp"+row;
+						hasil = "<td>"+populasi_tampung_seleksi[row][col]+"</td>";
 						$(id).append(hasil);
 					}
 				}
 			}
-
+			console.log("akhir seleksi menggunakan populasi bangkit");
+			console.log(populasi_bangkit_seleksi);
 			// hasil dari roullete ditampilkan kedalam tabel roullete
 			$("#hasilRoullete").empty();
-			for(var row = 0; row < populasi_array.length; row++){
+			for(row = 0; row < populasi_bangkit_seleksi.length; row++){
 				$("#hasilRoullete").append("<tr id=hr"+row+"></tr>");
 			}
 
-			for(var row = 0; row < populasi_array.length; row++){
-				for(var col = 0; col < populasi_array[row].length; col++){
-					if(col == 5 || col == 6 || col == 7){
+			for(row = 0; row < populasi_bangkit_seleksi.length; row++){
+				for(col = 0; col < populasi_bangkit_seleksi[row].length; col++){
+					if(col == 5 || col == 6){
 					}else{
-						var id = "#hasilRoullete #hr"+row;
-						var hasil = "<td>"+populasi_array[row][col]+"</td>";
+						id = "#hasilRoullete #hr"+row;
+						hasil = "<td>"+populasi_bangkit_seleksi[row][col]+"</td>";
 						$(id).append(hasil);
 					}
 				}
 			}
+			
+			$("#hasilRoullete").data(populasi_bangkit_seleksi);
+			$("#hasilRoulleteTemp").data(populasi_bangkit_seleksi);
 			$("#data-roullete").trigger('click');
 			$("#doSeleksi").attr('disabled',true);
-			console.log("seleksi");
-			console.log(populasi_array);
 		});	
 
 		$("#doKawinSilang").on('click',function(e){
-			e.preventDefault();
-			console.log("kawin");
-			console.log(populasi_array);
-			var probabilitas_kawin_silang = $("#probcrossover").val() / 100;
-			var random_kawin = 0;
-			var cut_point_pertama = 0, cut_point_kedua = 0,tampung_gen = 0;
-			var populasi_tampung_kawin = [], populasi_terpilih = [], nomor_terpilih = [], populasi_tampung_terpilih = [];
-			populasi_tampung_kawin = populasi_array;
-			populasi_array = [];
-			for(var i = 1; i < populasi_tampung_kawin.length; i++){
+			let populasi_kawin_silang = [], populasi_bangkit = [],populasi_terpilih = [], nomor_terpilih = [], populasi_kawin = [];
+			let probabilitas_kawin_silang = 0, random_kawin = 0, cut_point_pertama = 0, cut_point_kedua = 0,tampung_gen = 0;
+			let i,j, row, col, id, hasil;
+			populasi_kawin_silang = $.map( $("#hasilRoullete").data(),function(value, index){
+				return [value];
+			});
+			
+			console.log(populasi_kawin_silang);
+
+			probabilitas_kawin_silang = $("#probcrossover").val() / 100;
+			for(i = 0; i < populasi_kawin_silang.length; i++){
 				random_kawin = Math.random();
 				if(random_kawin < probabilitas_kawin_silang){
 					nomor_terpilih.push(i);
-					populasi_terpilih.push(populasi_tampung_kawin[i]);
+					populasi_terpilih.push(populasi_kawin_silang[i]);
 				}
 			}
-			console.log(nomor_terpilih);
+
 			console.log(populasi_terpilih);
-			console.log(populasi_tampung_kawin);
+			console.log(nomor_terpilih);
 			if(populasi_terpilih.length == 0 || populasi_terpilih.length == 1){
 
 			}else{
-				for(var terpilih = 1; terpilih < populasi_terpilih.length; terpilih++){
-					cut_point_pertama = Math.floor(Math.random() * JUMLAH_KOMPONEN);
-					cut_point_kedua = Math.floor(Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama)) + cut_point_pertama;
-					console.log(cut_point_pertama);
-					console.log(cut_point_kedua);
-					for(var cut_point = cut_point_pertama; cut_point <= cut_point_kedua; cut_point++){
-						tampung_gen = populasi_terpilih[terpilih-1][cut_point];
-						populasi_terpilih[terpilih - 1][cut_point] = populasi_terpilih[terpilih][cut_point];
-						populasi_terpilih[terpilih][cut_point] = tampung_gen;
+				for(i = 1; i <= populasi_terpilih.length; i++){
+					if(i == populasi_terpilih.length){
+						
+					}else{
+						cut_point_pertama = Math.floor(Math.random() * JUMLAH_KOMPONEN);
+						cut_point_kedua = Math.floor(Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama)) + cut_point_pertama;
+						console.log(cut_point_pertama);
+						console.log(cut_point_kedua);
+						console.log(populasi_terpilih[i - 1]);
+						console.log(populasi_terpilih[i]);
+						for(j = cut_point_pertama; j <= cut_point_kedua; j++){
+							tampung_gen = populasi_terpilih[i-1][j];
+							populasi_terpilih[i - 1][j] = populasi_terpilih[i][j];
+							populasi_terpilih[i][j] = tampung_gen;
+						}
 					}
-					console.log(populasi_terpilih[terpilih - 1]);
-					console.log(populasi_terpilih[terpilih]);
+					populasi_kawin[i - 1] = $.map(populasi_terpilih[i - 1], function(value, index){
+						return [value];
+					});	
+					console.log(populasi_kawin);
+					console.log(populasi_terpilih[i - 1]);
+					console.log(populasi_terpilih[i]);
 				}
 			}
-			console.log(populasi_terpilih);
-			for(var q = 0; q < populasi_tampung_kawin.length; q++){
-				for(var f = 0; f < nomor_terpilih.length; f++){
-					if(nomor_terpilih[f] == q){
-						populasi_array.push(populasi_terpilih[f]);
-						break;
-					}
-				}
-			}
-
-			console.log(populasi_array);
+			console.log(populasi_kawin_silang);
 			$("#hasilKawinSilang").empty();
-			for(var row = 0; row < populasi_array.length; row++){
+			for(row = 0; row < populasi_kawin_silang.length; row++){
 				$("#hasilKawinSilang").append("<tr id=hks"+row+"></tr>");
 			}
 
-			for(var row = 0; row < populasi_array.length; row++){
-				for(var col = 0; col < populasi_array[row].length; col++){
-					var id = "#hasilKawinSilang #hks"+row;
-					var hasil = "<td>"+populasi_array[row][col]+"</td>";
-					$(id).append(hasil);
+			for(row = 0; row < populasi_kawin_silang.length; row++){
+				for(col = 0; col < populasi_kawin_silang[row].length; col++){
+					if(col == 5 || col == 6){
+					}else{
+						id = "#hasilKawinSilang #hks"+row;
+						hasil = "<td>"+populasi_kawin_silang[row][col]+"</td>";
+						$(id).append(hasil);
+					}
 				}
 			}
+
 			$("#data-kawin-silang").trigger('click');
-			// $("#doKawinSilang").attr('disabled',true);
-			// console.log(cut_point);
+			$("#doKawinSilang").attr('disabled',true);
+			
 		});
 
 		// TODO : untuk variabel hasil_generasi_ke masukkan kesini

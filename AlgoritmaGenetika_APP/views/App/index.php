@@ -579,8 +579,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				}
 			}
 
-			console.log(populasi_terpilih);
-			console.log(nomor_terpilih);
+			// console.log(populasi_terpilih);
+			// console.log(nomor_terpilih);
 			if(populasi_terpilih.length == 0 || populasi_terpilih.length == 1){
 
 			}else{
@@ -590,10 +590,10 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					}else{
 						cut_point_pertama = Math.floor(Math.random() * JUMLAH_KOMPONEN);
 						cut_point_kedua = Math.floor(Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama)) + cut_point_pertama;
-						console.log(cut_point_pertama);
-						console.log(cut_point_kedua);
-						console.log(populasi_terpilih[i - 1]);
-						console.log(populasi_terpilih[i]);
+						// console.log(cut_point_pertama);
+						// console.log(cut_point_kedua);
+						// console.log(populasi_terpilih[i - 1]);
+						// console.log(populasi_terpilih[i]);
 						for(j = cut_point_pertama; j <= cut_point_kedua; j++){
 							tampung_gen = populasi_terpilih[i-1][j];
 							populasi_terpilih[i - 1][j] = populasi_terpilih[i][j];
@@ -603,9 +603,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					populasi_kawin[i - 1] = $.map(populasi_terpilih[i - 1], function(value, index){
 						return [value];
 					});	
-					console.log(populasi_kawin);
-					console.log(populasi_terpilih[i - 1]);
-					console.log(populasi_terpilih[i]);
+					// console.log(populasi_kawin);
+					// console.log(populasi_terpilih[i - 1]);
+					// console.log(populasi_terpilih[i]);
 				}
 			}
 			console.log(populasi_kawin_silang);
@@ -625,6 +625,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				}
 			}
 
+			$("#hasilKawinSilang").data(populasi_kawin_silang);
 			$("#data-kawin-silang").trigger('click');
 			$("#doKawinSilang").attr('disabled',true);
 			
@@ -632,7 +633,13 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 		// TODO : untuk variabel hasil_generasi_ke masukkan kesini
 		$("#doMutasi").on('click',function(){
-			console.log(populasi_array);
+			let populasi_mutasi = [];
+			let probabilitas_mutasi = 0;
+			populasi_mutasi= $.map( $("#hasilKawinSilang").data(),function(value, index){
+				return [value];
+			});
+			probabilitas_mutasi = $("#probmutasi").val() / 100;
+			console.log(populasi_mutasi);
 		});
 	});
 	</script>

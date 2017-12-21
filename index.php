@@ -114,6 +114,7 @@ switch (ENVIRONMENT)
  *
  * NO TRAILING SLASH!
  */
+	// ini application folder untuk root project
 	$application_folder = './Dashboard';
 
 /*

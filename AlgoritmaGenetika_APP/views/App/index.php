@@ -356,6 +356,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			populasi_array.push([]);
 			total_biaya = 0;
 			fungsi_fitness = 0;
+			random = 0;
 			for(k = 0; k < JUMLAH_KOMPONEN + 1; k++){
 				if(k == JUMLAH_KOMPONEN){
 					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
@@ -369,6 +370,30 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			}
 		}
 		return populasi_array;
+	}
+
+	function regenerasi(populasi, maksimal){
+		let populasi_generasi, j, i, random, fungsi_fitness, total_biaya;
+		populasi_generasi = [];
+		for(i = 0; i < populasi.length; i++){
+			populasi_generasi.push([]);
+			total_biaya = 0;
+			fungsi_fitness = 0;
+			random = 0;
+			for(j = 0; j < JUMLAH_KOMPONEN + 1; j++){
+				if(j == JUMLAH_KOMPONEN){
+					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
+					populasi_generasi[i].push(fungsi_fitness);
+					populasi_generasi[i].push(total_biaya);
+				}else{
+					random = populasi[i][j];
+					populasi_generasi[i].push(random);
+					total_biaya += parseInt(KOMPONEN[j][(parseInt(populasi_generasi[i][j])-1)]);
+				}
+			}
+		}
+
+		return populasi_generasi;
 	}
 
 	/**
@@ -411,8 +436,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			console.log("awal bangkitkan");
 			console.log(populasi_bangkit);
 			populasi_bangkit = generasiRandom(individu, maksimal);
-			$("#hasilGenerasi").empty();
 
+			$("#hasilGenerasi").empty();
 			for(i = 0; i < individu; i++){
 				$("#hasilGenerasi").append("<tr id=hg"+i+"></tr>");
 			}
@@ -426,6 +451,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			}
 			
 			$("#hasilGenerasi").data(populasi_bangkit);
+			$("#doProbabilitas").attr("disabled",false);
 			console.log("akhir bangkitkan");
 			console.log(populasi_bangkit);
 		});
@@ -479,7 +505,9 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			console.log("akhir probabilitas");
 			console.log(populasi_bangkit_probabilitas);
 			$("#doProbabilitas").attr('disabled',true);
+			$("#doSeleksi").attr('disabled',false);
 			$("#data-probabilitas").trigger('click');
+
 		});
 
 		/**
@@ -490,7 +518,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		 * 4. Tampung hasilnya ke populasi Utama
 		 */
 		$("#doSeleksi").on('click',function(){
-			let populasi_bangkit_seleksi = [], populasi_bangkit_seleksi_temp = [], populasi_tampung_seleksi = [], row, col, random_seleksi = 0, kromosom_terpilih = 0;
+			let populasi_seleksi = [], populasi_seleksi_temp = [], populasi_tampung_seleksi = [], row, col, random_seleksi = 0, kromosom_terpilih = 0;
 			let roda_putar = [], id = 0, hasil, persentasi_seleksi = [];
 			populasi_tampung_seleksi = $.map( $("#hasilProbabilitas").data(),function(value, index){
 				return [value];
@@ -516,7 +544,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				// step 3
 				kromosom_terpilih = roda_putar[random_seleksi];
 				// step 4
-				populasi_bangkit_seleksi[row] = $.map(populasi_tampung_seleksi[kromosom_terpilih],function(value, index){
+				populasi_seleksi[row] = $.map(populasi_tampung_seleksi[kromosom_terpilih],function(value, index){
 					return [value];
 				});
 				for(col = 0; col < populasi_tampung_seleksi[row].length; col++){
@@ -536,34 +564,36 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				}
 			}
 			console.log("akhir seleksi menggunakan populasi bangkit");
-			console.log(populasi_bangkit_seleksi);
+			console.log(populasi_seleksi);
 			// hasil dari roullete ditampilkan kedalam tabel roullete
 			$("#hasilRoullete").empty();
-			for(row = 0; row < populasi_bangkit_seleksi.length; row++){
+			for(row = 0; row < populasi_seleksi.length; row++){
 				$("#hasilRoullete").append("<tr id=hr"+row+"></tr>");
 			}
 
-			for(row = 0; row < populasi_bangkit_seleksi.length; row++){
-				for(col = 0; col < populasi_bangkit_seleksi[row].length; col++){
+			for(row = 0; row < populasi_seleksi.length; row++){
+				for(col = 0; col < populasi_seleksi[row].length; col++){
 					if(col == 5 || col == 6){
 					}else{
 						id = "#hasilRoullete #hr"+row;
-						hasil = "<td>"+populasi_bangkit_seleksi[row][col]+"</td>";
+						hasil = "<td>"+populasi_seleksi[row][col]+"</td>";
 						$(id).append(hasil);
 					}
 				}
 			}
 			
-			$("#hasilRoullete").data(populasi_bangkit_seleksi);
-			$("#hasilRoulleteTemp").data(populasi_bangkit_seleksi);
+			$("#hasilRoullete").data(populasi_seleksi);
+			$("#hasilRoulleteTemp").data(populasi_seleksi);
 			$("#data-roullete").trigger('click');
 			$("#doSeleksi").attr('disabled',true);
+			$("#doKawinSilang").attr('disabled',false);
 		});	
 
 		$("#doKawinSilang").on('click',function(e){
-			let populasi_kawin_silang = [], populasi_bangkit = [],populasi_terpilih = [], nomor_terpilih = [], populasi_kawin = [];
+			let populasi_kawin_silang = [], populasi_terpilih = [], nomor_terpilih = [], populasi_kawin = [];
 			let probabilitas_kawin_silang = 0, random_kawin = 0, cut_point_pertama = 0, cut_point_kedua = 0,tampung_gen = 0;
 			let i,j, row, col, id, hasil;
+			
 			populasi_kawin_silang = $.map( $("#hasilRoullete").data(),function(value, index){
 				return [value];
 			});
@@ -628,18 +658,53 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			$("#hasilKawinSilang").data(populasi_kawin_silang);
 			$("#data-kawin-silang").trigger('click');
 			$("#doKawinSilang").attr('disabled',true);
+			$("#doMutasi").attr('disabled',false);
 			
 		});
 
-		// TODO : untuk variabel hasil_generasi_ke masukkan kesini
 		$("#doMutasi").on('click',function(){
-			let populasi_mutasi = [];
-			let probabilitas_mutasi = 0;
+			let populasi_mutasi = [], populasi_mutasi_generasi = [];
+			let probabilitas_mutasi = 0, random_mutasi = 0, angka_mutasi = 0, biaya_maksimal = 0;
+			let i, j, id, hasil, row, col;
+			biaya_maksimal  = $("#hargamaks").val() / 10000;
 			populasi_mutasi= $.map( $("#hasilKawinSilang").data(),function(value, index){
 				return [value];
 			});
-			probabilitas_mutasi = $("#probmutasi").val() / 100;
 			console.log(populasi_mutasi);
+			probabilitas_mutasi = $("#probmutasi").val() / 100;
+			for(i = 0; i < populasi_mutasi.length; i++){
+				for(j = 0; j < populasi_mutasi[i].length - 2; j++){
+					random_mutasi = Math.random();
+					if(random_mutasi < probabilitas_mutasi){
+						angka_mutasi = Math.floor((Math.random() * 10) + 1);
+						populasi_mutasi[i][j] = angka_mutasi;
+						console.log("mutasi");
+						console.log(angka_mutasi);
+						console.log(j);
+					}
+				}
+			}
+			console.log(populasi_mutasi);
+			populasi_mutasi_generasi = regenerasi(populasi_mutasi, biaya_maksimal);
+			console.log(populasi_mutasi_generasi);
+
+			$("#hasilGenerasi").empty();
+			for(i = 0; i < populasi_mutasi_generasi.length; i++){
+				$("#hasilGenerasi").append("<tr id=hg"+i+"></tr>");
+			}
+
+			for(row = 0; row < populasi_mutasi_generasi.length; row++){
+				for(col = 0; col < populasi_mutasi_generasi[row].length; col++){
+					id = "#hasilGenerasi #hg"+row;
+					hasil = "<td>"+populasi_mutasi_generasi[row][col]+"</td>";
+					$(id).append(hasil);
+				}
+			}
+			$("#hasilGenerasi").data(populasi_mutasi_generasi);
+			$("#data-generasi").trigger('click');
+			$("#doMutasi").attr('disabled',true);
+			$("#doProbabilitas").attr("disabled",false);
+			
 		});
 	});
 	</script>

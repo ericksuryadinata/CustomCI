@@ -120,7 +120,7 @@ switch (ENVIRONMENT)
  *
  * NO TRAILING SLASH!
  */
-	$application_folder = '../AlgoritmaGenetika_APP';
+	$application_folder = 'SubDomain_APP';
 
 /*
  *---------------------------------------------------------------

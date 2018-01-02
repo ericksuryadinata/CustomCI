@@ -1,6 +1,6 @@
-###################
+#########
 Custom CI
-###################
+#########
 
 Banyak Aplikasi hanya dengan menggunakan satu folder sistem codeigniter
 

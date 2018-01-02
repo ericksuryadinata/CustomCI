@@ -1,11 +1,11 @@
-*****
-ABOUT
-*****
+******************
+Tentang Folder Ini
+******************
 
 Belajar koneksi menggunakan MDB file
 
 ************
-CARA KONEKSI
+Cara Koneksi
 ************
 
 PHP ODBC module

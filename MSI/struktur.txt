@@ -1,0 +1,81 @@
+/* untuk saat ini hanya dikhususkan di fakultas teknik */
+/* login bedakan antar jurusan */
+utg_user
+--------
+id_user [PK]
+id_jurusan [FK]
+userlogin(nbi/npp/dll) [UQ]
+password
+kunjung
+ip
+is_login
+
+/* anggap kendali dibawah fakultas */
+
+// kemungkinan jurusan bisa ditambah
+utg_jurusan
+-----------
+id_jurusan [PK]
+kode_jurusan [UQ]
+nama_jurusan
+created_at
+updated_at
+created_by
+updated_by
+
+// praktikum di setiap jurusan
+utg_praktikum
+--------------
+id_praktikum [PK]
+id_jurusan [FK]
+kode_praktikum [UQ]
+nama_praktikum
+created_at
+updated_at
+created_by
+updated_by
+
+// tahun ajar
+utg_tahun_ajar
+---------------
+id_tahun_ajar [PK]
+tahun_ajar
+aktif
+created_at
+updated_at
+created_by
+updated_by
+
+// daftar lab
+utg_laboratorium
+----------------
+id_laboratorium [PK]
+id_jurusan [FK]
+kode_lab [UQ]
+nama_lab
+kapasitas
+created_at
+updated_at
+created_by
+updated_by
+
+// jadwal kelas
+utg_kelas
+---------
+id_kelas
+id_laboratorium
+id_praktikum
+kode_kelas
+nama_kelas
+
+// jadwal praktikum
+utg_jadwal_praktikum
+--------------------
+id_jadwal_praktikum [PK]
+id_laboratorium [FK]
+id_praktikum [FK]
+id_kelas [FK]
+jam
+tahun_aktif [FK]
+
+'."'".$anggota->id_user."'".'

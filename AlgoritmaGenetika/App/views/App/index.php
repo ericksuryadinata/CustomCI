@@ -248,13 +248,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	 * untuk harga digunakan perbandingan 1 : 10000
 	 * pastikan untuk setiap komponen mempunyai panjang yang sama
 	 */
-	const RAM = [40,45,47,56,58,62,72,73,80,91];
-	const MOTHERBOARD = [100,140,160,175,210,230,240,260,290,320];
-	const POWER_SUPPLY = [41,43,46,58,65,66,70,78,83,85];
-	const PROCESSOR = [300,375,450,480,510,525,560,589,611,643];
-	const HARD_DISK = [82,86,92,94,97,102,113,124,136,145];
+	const RAM = [109,131,1431,100];//,58,62,72,73,80,91];
+	const MOTHERBOARD = [502,607,700,823];//,210,230,240,260,290,320];
+	const POWER_SUPPLY = [101,132,150,1007];//,65,66,70,78,83,85];
+	const PROCESSOR = [80,90,153,2106];//,510,525,560,589,611,643];
+	const HARD_DISK = [181,203,300,500];//,97,102,113,124,136,145];
 	const KOMPONEN = [RAM, MOTHERBOARD, POWER_SUPPLY, PROCESSOR, HARD_DISK];
 	const JUMLAH_KOMPONEN = 5;
+	const JUMLAH_PER_KOMPONEN = 4;
 
 	/**
 	 * Untuk menampilkan harga
@@ -310,7 +311,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		if(varA.length == 0 || varB.length == 0){
 			return 'FALSE';
 		}else{
-			if(parseInt(varB) < 6000000){
+			if(parseInt(varB) < 0){
 				return 'FALSE';
 			}else{
 				return 'TRUE';
@@ -324,12 +325,12 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	 * @params maksimal 	harga maksimal permintaan
 	 * @return induk 		dipilih berdasarkan nilai fitness tertinggi
 	 */
-	function seleksi(individu){
+	function seleksiTerbaik(individu){
 		let induk = [],check = 0, i;
 		for(i = 0; i < individu.length; i++){
 			// check apakah fitnessnya lebih besar dan total harga komponen lebih kecil sama dengan harga maksimal
-			if( check <= parseInt(individu[i][5]) ){
-				check = parseInt(individu[i][5]);
+			if( check <= parseInt(individu[i][6]) ){
+				check = parseInt(individu[i][6]);
 				induk = individu[i];
 			}
 		}
@@ -350,32 +351,211 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	}
 
 	/**
+	 * Untuk mengetahui total harga setiap individu
+	 * @param individu	individu yang akan ditotal
+	 * @param mode		random untuk array 5, min2 untuk array 7
+	 * @return jumlah	total harga individu
+	 */
+	function totalHarga(populasi, mode){
+		let jumlah = 0, i;
+		if(mode === 'random'){
+			for(i = 0; i < populasi.length; i++){
+				jumlah += parseInt(KOMPONEN[i][populasi[i]]);
+			}
+		}else if(mode === 'min2'){
+			for(i = 0; i < populasi.length - 2; i++){
+				jumlah += parseInt(KOMPONEN[i][populasi[i]]);
+			}
+		}
+		
+		return jumlah;
+	}
+
+	/**
 	 * Untuk random generasi paling awal
 	 * @params individu 		jumlah individu
 	 * @params maksimal			biaya maksimal
 	 * @return populasi_array 	list populasi
 	 */
+	
 	function generasiRandom(individu, maksimal) {  
-		let populasi_array, j, k, random, fungsi_fitness, total_biaya;
+		let populasi, populasi_array, j = 0, k, random, fungsi_fitness, total_biaya;
 		populasi_array = [];
-		for(j = 0; j < individu; j++){
+		populasi = [];
+		while(j < individu){
+		//for(j = 0; j < individu; j++){
 			populasi_array.push([]);
 			total_biaya = 0;
 			fungsi_fitness = 0;
 			random = 0;
-			for(k = 0; k < JUMLAH_KOMPONEN + 1; k++){
-				if(k == JUMLAH_KOMPONEN){
-					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
-					populasi_array[j].push(fungsi_fitness);
-					populasi_array[j].push(total_biaya);
-				}else{
-					random = Math.floor((Math.random() * 10) + 1);
-					populasi_array[j].push(random);
-					total_biaya += parseInt(KOMPONEN[k][(parseInt(populasi_array[j][k])-1)]);
-				}
+			populasi_array[j] = [];
+			for(k = 0; k < JUMLAH_KOMPONEN; k++){
+				random = Math.floor((Math.random() * JUMLAH_PER_KOMPONEN));
+				populasi_array[j].push(random);
+					
+			}
+			total_biaya = totalHarga(populasi_array[j],'random');
+			if( total_biaya <= maksimal){
+			//if( total_biaya <= maksimal && (maksimal - 500) <= total_biaya){
+				fungsi_fitness = Math.abs(1 - (Math.abs(maksimal - total_biaya) / maksimal));
+				populasi_array[j].push(fungsi_fitness);
+				populasi_array[j].push(total_biaya);
+				populasi.push(populasi_array[j]);
+				j = j + 1;
 			}
 		}
-		return populasi_array;
+		return populasi;
+	}
+
+	function kawinSilang(populasi, probabilitas_kawin_silang, maksimal){
+		let populasi_kawin_silang = [],populasi_kawin_silang_temp = [], populasi_induk_terpilih= [], return_populasi = [];
+		let i,j,k,total_harga = 0, random_kawin = 0, ke = 0;
+		let populasi_temp = [], populasi_temp2 = [], populasi_temp3 = [], populasi_pertama = [], index = [];
+		let index_terpilih = [], populasi_co = [];
+		populasi_kawin_silang =  populasi.map(function(value){
+			return value;
+		});
+		populasi_kawin_silang_temp =  populasi.map(function(value){
+			return value;
+		});
+
+		for(i = 0; i < populasi_kawin_silang.length; i++){
+			random_kawin = Math.random();
+			if(random_kawin < probabilitas_kawin_silang){
+				populasi_induk_terpilih[ke] = (populasi_kawin_silang_temp[i]);
+				index_terpilih.push(i);
+				ke+=1;
+			}
+		}
+
+		if(populasi_induk_terpilih.length != 0){
+			
+			populasi_temp = populasi_induk_terpilih.map(function(value){
+				return value;
+			});
+
+			populasi_temp2 = populasi_induk_terpilih.map(function(value){
+				return value;
+			});
+
+			populasi_pertama = populasi_induk_terpilih[0].map(function(value){
+				return value;
+			});
+
+			for(i = 0; i < populasi_induk_terpilih.length; i++){
+				populasi_temp3.push([]);
+				random_kawin = Math.floor(Math.random() * JUMLAH_KOMPONEN);
+				total_harga = totalHarga(populasi_temp[i], 'min2');
+				if(i != populasi_induk_terpilih.length - 1){
+					for(j = 0; j < random_kawin; j++){
+						populasi_temp3[i].push(populasi_temp2[i+1][j]);
+					}
+					for(j = random_kawin; j < populasi_induk_terpilih[i].length; j++){
+						populasi_temp3[i].push(populasi_temp2[i+1][j]);
+					}
+					if(total_harga < parseInt(totalHarga(populasi_temp3[i],'min2')) && parseInt(totalHarga(populasi_temp3[i],'min2')) <= maksimal){
+						populasi_co.push(populasi_temp3[i]);
+						index.push(i);
+					}
+				}else{
+					for(j = 0; j < random_kawin; j++){
+						populasi_temp3[i].push(populasi_pertama[j]);
+					}
+					for(j = random_kawin; j < populasi_induk_terpilih[i].length; j++){
+						populasi_temp3[i].push(populasi_pertama[j]);
+					}
+					if(total_harga < parseInt(totalHarga(populasi_temp3[i],'min2')) && parseInt(totalHarga(populasi_temp3[i],'min2')) <= maksimal){
+						populasi_co.push(populasi_temp3[i]);
+						index.push(i);
+					}
+				}
+			}
+
+			ke = 0;
+			if(populasi_co.length != 0){
+				for(i = 0; i < populasi_kawin_silang_temp.length; i++){
+					for(j = 0; j < index.length; j++){
+						if(index[j] == i){
+							populasi_kawin_silang_temp[i] = populasi_co[ke];
+							ke+=1;
+						}
+					}
+				}
+				return_populasi = populasi_kawin_silang_temp.map(function(value){
+					return value;
+				});
+			}else{
+				return_populasi = populasi_kawin_silang_temp.map(function(value){
+					return value;
+				});
+			}
+		}else{
+			return_populasi = populasi_kawin_silang_temp.map(function(value){
+				return value;
+			});
+		}
+
+		return return_populasi;
+	}
+
+	function mutasi(populasi, probabilitas_mutasi, maksimal){
+		let i,j,k,jumlah_gen = 0, mutasi_terjadi = 0, loop = 0;
+		let populasi_mutasi = [], populasi_mutasi_temp = [], random_mutasi, mutasi_komponen, sub_jenis, urutan_ke;
+		let temp, harga_total;
+		populasi_mutasi = populasi.map(function(value){
+			return value;
+		});
+
+		populasi_mutasi_temp = populasi.map(function(value){
+			return value;
+		});
+
+		for(i = 0; i < populasi_mutasi.length; i++){
+			for(j = 0; j < populasi_mutasi[i].length - 2; j++){
+				jumlah_gen+=1;
+			}
+		}
+
+		mutasi_terjadi = Math.floor(jumlah_gen * probabilitas_mutasi);
+
+		while (loop < mutasi_terjadi){
+			temp = [];
+			random_mutasi = Math.floor(Math.random() * jumlah_gen); //random index
+			urutan_ke = Math.ceil(random_mutasi/JUMLAH_KOMPONEN); // array populasi
+			if(urutan_ke != 0){
+				sub_jenis = Math.abs(parseInt((random_mutasi + JUMLAH_KOMPONEN) - urutan_ke * JUMLAH_KOMPONEN)); //komponen yang termutasi
+			}else{
+				sub_jenis = 0;
+			}
+			mutasi_komponen = Math.floor(Math.random() * JUMLAH_PER_KOMPONEN); // random nomor
+			if(sub_jenis != 0){
+				for(i = 0; i < populasi_mutasi[urutan_ke - 1].length - 2; i++){
+					temp.push(populasi_mutasi[urutan_ke - 1][i]);
+				}
+				temp[sub_jenis - 1] = mutasi_komponen;
+				if(parseInt(populasi_mutasi[urutan_ke - 1][6]) < parseInt(totalHarga(temp,'min2')) 
+					&& parseInt(totalHarga(temp,'min2'))<=maksimal ){
+						populasi_mutasi[urutan_ke - 1][sub_jenis - 1] = mutasi_komponen;
+						harga_total = totalHarga(populasi_mutasi[urutan_ke - 1],'min2');
+						populasi_mutasi[urutan_ke - 1][6] = harga_total;
+						populasi_mutasi[urutan_ke - 1][5] = Math.abs(1 - (Math.abs(maksimal - harga_total) / maksimal));
+				}
+			}else{
+				for(i = 0; i < populasi_mutasi[urutan_ke].length - 2; i++){
+					temp.push(populasi_mutasi[urutan_ke][i]);
+				}
+				temp[sub_jenis] = mutasi_komponen;
+				if(parseInt(populasi_mutasi[urutan_ke][6]) < parseInt(totalHarga(temp,'min2')) 
+					&& parseInt(totalHarga(temp,'min2'))<=maksimal ){
+						populasi_mutasi[urutan_ke][sub_jenis] = mutasi_komponen;
+						harga_total = totalHarga(populasi_mutasi[urutan_ke],'min2');
+						populasi_mutasi[urutan_ke][6] = harga_total;
+						populasi_mutasi[urutan_ke][5] = Math.abs(1 - (Math.abs(maksimal - harga_total) / maksimal));
+				}
+			}
+			loop+=1;
+		}
+		return populasi_mutasi;
 	}
 
 	/**
@@ -394,7 +574,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			random = 0;
 			for(j = 0; j < JUMLAH_KOMPONEN + 1; j++){
 				if(j == JUMLAH_KOMPONEN){
-					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
+					//fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
+					fungsi_fitness = Math.abs(1 - (Math.abs(maksimal - total_biaya) / maksimal));
 					populasi_generasi[i].push(fungsi_fitness);
 					populasi_generasi[i].push(total_biaya);
 				}else{
@@ -454,7 +635,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			let i, populasi_bangkit = [], row, col, id, hasil;
 			// step 1
 			let individu = $("#individu").val();
-			let maksimal = $("#hargamaks").val() / 10000; // dibagi sepuluh ribu, karena komponen juga dalam perbandingan 1 : 1000
+			let maksimal = $("#hargamaks").val() / 1000; // dibagi sepuluh ribu, karena komponen juga dalam perbandingan 1 : 1000
 			// step 2
 			populasi_bangkit = generasiRandom(individu, maksimal);
 
@@ -473,6 +654,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			
 			// step 3
 			$("#hasilGenerasi").data(populasi_bangkit);
+			console.log("bangkit populasi");
+			console.log(populasi_bangkit);
 
 			$("#doProbabilitas").attr("disabled",false);
 		});
@@ -534,7 +717,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				}
 			}
 			
-			individu_terbaik = seleksi(populasi_bangkit_probabilitas);
+			individu_terbaik = seleksiTerbaik(populasi_bangkit_probabilitas);
 			generasi_terbaik.push(individu_terbaik);
 			console.log(generasi_terbaik);
 			displayHargaTotal(generasi_terbaik);
@@ -624,7 +807,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			// step 4
 			$("#hasilRoullete").data(populasi_seleksi);
 			$("#hasilRoulleteTemp").data(populasi_seleksi);
-
+			console.log("populasi seleksi");
+			console.log(populasi_seleksi);
 			$("#data-roullete").trigger('click');
 			$("#doSeleksi").attr('disabled',true);
 			$("#doKawinSilang").attr('disabled',false);
@@ -635,76 +819,22 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		 * Untuk melakukan kawin silang
 		 *-----------------------------
 		 *
-		 *--------------
-		 * !!!WARNING!!!
-		 *--------------
-		 * Disini terjadi hoisting, array yang sebelumnya terbentuk dapat tertukar dengan array setelah dilakukan swap
-		 * Untuk mengetahuinya silahkan di lakukan console.log pada variabel populasi_kawin_silang
-		 * Dikarenakan tanpa dengan melakukan perubahan di populasi_kawin_silang
-		 * Mereka semua berubah, sejalan dengan swap yang dilakukan
-		 *------------------------------------------------------------------------------------------------------------
-		 * Flowchart
-		 * 1. Tampung data-id sebelumnya kedalam array
-		 * 2. Ambil nilai probabilitas kawin silang
-		 * 3. Random sejumlah nilai dari 0 - 1
-		 * 4. Jika angka random lebih kecil, masukkan populasi indeks ke i kedalam array populasi yang terpilih
-		 * 5. Lakukan perulangan sejumlah populasi yang terpilih, ambil dua nilai berbeda dengan random
-		 * 6. Lakukan swap sejumlah dua nilai berbeda tersebut
-		 * 7. Tampung hasilnya kedalam populasi utama
-		 *
-		 * TODO : menghilangkan undefined value dan hoisting
+		 * 
 		 */
 		$("#doKawinSilang").on('click',function(){
-			let populasi_kawin_silang = [], populasi_terpilih = [], nomor_terpilih = [], populasi_kawin = [];
-			let probabilitas_kawin_silang = 0, random_kawin = 0, cut_point_pertama = 0, cut_point_kedua = 0,tampung_gen = 0;
-			let i,j, row, col, id, hasil;
-			
-			// step 1
-			populasi_kawin_silang = $.map( $("#hasilRoullete").data(),function(value, index){
+			let populasi_kawin_silang = [], populasi = [];
+			let probabilitas_kawin_silang = 0, maksimal;
+			let row, col, id, hasil;
+			populasi = $.map( $("#hasilRoullete").data(),function(value, index){
 				return [value];
 			});
+			console.log("sebelum kawin silang");
+			console.log(populasi);
 
-			// step 2
-			probabilitas_kawin_silang = $("#probcrossover").val() / 100;
+			probabilitas_kawin_silang = parseFloat($("#probcrossover").val() / 100);
+			maksimal = $("#hargamaks").val() / 1000;
 
-			for(i = 0; i < populasi_kawin_silang.length; i++){
-				// step 3
-				random_kawin = Math.random();
-				if(random_kawin < probabilitas_kawin_silang){
-					// step 4
-					nomor_terpilih.push(i);
-					// Kemungkinan awal mula hoisting terjadi disini
-					populasi_terpilih.push(populasi_kawin_silang[i]);
-				}
-			}
-
-			// TODO : Hilangkan undefined disini
-			if(populasi_terpilih.length == 0 || populasi_terpilih.length == 1){
-
-			}else{
-				// step 5
-				for(i = 1; i <= populasi_terpilih.length; i++){
-					if(i == populasi_terpilih.length){
-						
-					}else{
-						// step 6
-						// Kemungkinan hoisting terjadi disini
-						cut_point_pertama = Math.floor(Math.random() * JUMLAH_KOMPONEN);
-						cut_point_kedua = Math.floor(Math.random() * (JUMLAH_KOMPONEN - cut_point_pertama)) + cut_point_pertama;
-						for(j = cut_point_pertama; j <= cut_point_kedua; j++){
-							tampung_gen = populasi_terpilih[i-1][j];
-							populasi_terpilih[i - 1][j] = populasi_terpilih[i][j];
-							populasi_terpilih[i][j] = tampung_gen;
-						}
-					}
-					// Untuk berjaga - jaga, digunakan variabel lain, 
-					// Tapi ternyata hoistingnya tidak mengganggu, tetapi membantu
-					populasi_kawin[i - 1] = $.map(populasi_terpilih[i - 1], function(value, index){
-						return [value];
-					});	
-				}
-			}
-
+			populasi_kawin_silang = kawinSilang(populasi, probabilitas_kawin_silang, maksimal);
 			$("#hasilKawinSilang").empty();
 			for(row = 0; row < populasi_kawin_silang.length; row++){
 				$("#hasilKawinSilang").append("<tr id=hks"+row+"></tr>");
@@ -723,7 +853,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 			// step 7
 			$("#hasilKawinSilang").data(populasi_kawin_silang);
-
+			console.log("sesudah kawin silang");
+			console.log(populasi_kawin_silang);
 			$("#data-kawin-silang").trigger('click');
 			$("#doKawinSilang").attr('disabled',true);
 			$("#doMutasi").attr('disabled',false);
@@ -734,46 +865,27 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		 *-----------------
 		 * Melakukan mutasi
 		 *-----------------
-		 * Flowchart
-		 * 1. Ambil nilai probabilitas mutasi dan biaya maksimal
-		 * 2. Tampung data-id sebelumnya kedalam array
-		 * 3. Lakukan perulangan sejumlah individu, dan sejumlah panjang setiap individu
-		 * 4. Random angka, jika angka lebih kecil dari probabilitas lakukan mutasi
-		 * 5. Mutasi dilakukan dengan merandom angka sejumlah banyaknya setiap komponen
-		 * 6. Isikan kedalam indeks yang termutasi
-		 * 7. Lakukan regenerasi dari populasi yang telah termutasi
-		 * 8. Tampung kedalam data-id
+		 * 
 		 */
 		$("#doMutasi").on('click',function(){
-			let populasi_mutasi = [], populasi_mutasi_generasi = [];
+			let populasi_mutasi_asli = [], populasi_mutasi_generasi = [];
 			let probabilitas_mutasi = 0, random_mutasi = 0, angka_mutasi = 0, biaya_maksimal = 0;
 			let i, j, id, hasil, row, col;
 			
 			// step 1
 			probabilitas_mutasi = $("#probmutasi").val() / 100;
-			biaya_maksimal  = $("#hargamaks").val() / 10000;
+			biaya_maksimal  = $("#hargamaks").val() / 1000;
 			// step 2
-			populasi_mutasi= $.map( $("#hasilKawinSilang").data(),function(value, index){
+			populasi_mutasi_asli = $.map( $("#hasilKawinSilang").data(),function(value, index){
 				return [value];
 			});
-
-			// step 3
-			for(i = 0; i < populasi_mutasi.length; i++){
-				for(j = 0; j < populasi_mutasi[i].length - 2; j++){
-					// step 4
-					random_mutasi = Math.random();
-					if(random_mutasi < probabilitas_mutasi){
-						// step 5
-						angka_mutasi = Math.floor((Math.random() * 10) + 1);
-						// step 6
-						populasi_mutasi[i][j] = angka_mutasi;
-					}
-				}
-			}
+			console.log("sebelum mutasi");
+			console.log(populasi_mutasi_asli);
 
 			// step 7
-			populasi_mutasi_generasi = regenerasi(populasi_mutasi, biaya_maksimal);
-
+			populasi_mutasi_generasi = mutasi(populasi_mutasi_asli, probabilitas_mutasi, biaya_maksimal);
+			console.log("sesudah mutasi");
+			console.log(populasi_mutasi_generasi);
 			$("#hasilGenerasi").empty();
 			for(i = 0; i < populasi_mutasi_generasi.length; i++){
 				$("#hasilGenerasi").append("<tr id=hg"+i+"></tr>");

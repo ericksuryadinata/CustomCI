@@ -21,7 +21,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					</div>
 					<div class="form-group col-md-6 col-sm-6 col-xs-12">
 					<label for="harga">Harga Mendekati : </label>
-						<input type="text" class="form-control" name="hargamaks" id="hargamaks" placeholder="lebih besar 6.000.000">
+						<input type="text" class="form-control" name="hargamaks" id="hargamaks" placeholder="lebih besar dari 1000000">
 					</div>
 				</div>
 				<div class="form-row">
@@ -41,7 +41,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 					</div>
 					<div class="col-md-8 col-sm-8 col-xs-12">
 						<h6>Fungsi Fitness : </h6>
-						<p><code> 1 &#47; &#40; abs&#40;Biaya Maksimal - &Sigma; Biaya Komponen&#41; &#47; Biaya Maksimal &#41;</code></p>
+						<p><code> 1 - &#40; abs&#40;Biaya Maksimal - &Sigma; Biaya Komponen&#41; &#47; Biaya Maksimal &#41;</code></p>
 					</div>
 				</div>
 			</div>
@@ -256,6 +256,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	const KOMPONEN = [RAM, MOTHERBOARD, POWER_SUPPLY, PROCESSOR, HARD_DISK];
 	const JUMLAH_KOMPONEN = 5;
 	const JUMLAH_PER_KOMPONEN = 4;
+	let generasi_terbaik = []; 
 
 	/**
 	 * Untuk menampilkan harga
@@ -325,11 +326,11 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	 * @params maksimal 	harga maksimal permintaan
 	 * @return induk 		dipilih berdasarkan nilai fitness tertinggi
 	 */
-	function seleksiTerbaik(individu){
+	function seleksiTerbaik(individu, maksimal){
 		let induk = [],check = 0, i;
 		for(i = 0; i < individu.length; i++){
 			// check apakah fitnessnya lebih besar dan total harga komponen lebih kecil sama dengan harga maksimal
-			if( check <= parseInt(individu[i][6]) ){
+			if( check <= parseInt(individu[i][6]) && parseInt(individu[i][6]) <=maksimal){
 				check = parseInt(individu[i][6]);
 				induk = individu[i];
 			}
@@ -674,12 +675,14 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		$("#doProbabilitas").on('click',function(){
 			let indeks = 0, i, persentasi_populasi = [], row, col, id, hasil;
 			let populasi_bangkit_probabilitas = [], total_fitness = 0, persentasi_fitness = 0, roda_putar = [];
-			let generasi_terbaik = [], individu_terbaik = [];
+			let individu_terbaik = [], maksimal;
 			
 			// step 1
 			populasi_bangkit_probabilitas = $.map( $("#hasilGenerasi").data(),function(value, index){
 				return [value];
 			});
+
+			maksimal  = $("#hargamaks").val() / 1000;
 
 			// step 2
 			total_fitness = totalFitness(populasi_bangkit_probabilitas);
@@ -717,7 +720,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 				}
 			}
 			
-			individu_terbaik = seleksiTerbaik(populasi_bangkit_probabilitas);
+			individu_terbaik = seleksiTerbaik(populasi_bangkit_probabilitas, maksimal);
 			generasi_terbaik.push(individu_terbaik);
 			console.log(generasi_terbaik);
 			displayHargaTotal(generasi_terbaik);

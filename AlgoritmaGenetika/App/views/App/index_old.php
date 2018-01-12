@@ -255,7 +255,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 	const HARD_DISK = [82,86,92,94,97,102,113,124,136,145];
 	const KOMPONEN = [RAM, MOTHERBOARD, POWER_SUPPLY, PROCESSOR, HARD_DISK];
 	const JUMLAH_KOMPONEN = 5;
-
+	let generasi_terbaik = [];
 	/**
 	 * Untuk menampilkan harga
 	 * @target tbody id=tabelHarga
@@ -365,7 +365,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			random = 0;
 			for(k = 0; k < JUMLAH_KOMPONEN + 1; k++){
 				if(k == JUMLAH_KOMPONEN){
-					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
+					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal + 1);
 					populasi_array[j].push(fungsi_fitness);
 					populasi_array[j].push(total_biaya);
 				}else{
@@ -394,7 +394,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			random = 0;
 			for(j = 0; j < JUMLAH_KOMPONEN + 1; j++){
 				if(j == JUMLAH_KOMPONEN){
-					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal);
+					fungsi_fitness = 1 / (Math.abs(maksimal - total_biaya) / maksimal + 1);
 					populasi_generasi[i].push(fungsi_fitness);
 					populasi_generasi[i].push(total_biaya);
 				}else{
@@ -491,7 +491,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 		$("#doProbabilitas").on('click',function(){
 			let indeks = 0, i, persentasi_populasi = [], row, col, id, hasil;
 			let populasi_bangkit_probabilitas = [], total_fitness = 0, persentasi_fitness = 0, roda_putar = [];
-			let generasi_terbaik = [], individu_terbaik = [];
+			let individu_terbaik = [];
 			
 			// step 1
 			populasi_bangkit_probabilitas = $.map( $("#hasilGenerasi").data(),function(value, index){
@@ -536,6 +536,7 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 			
 			individu_terbaik = seleksi(populasi_bangkit_probabilitas);
 			generasi_terbaik.push(individu_terbaik);
+			console.log('generasi terbaik')
 			console.log(generasi_terbaik);
 			displayHargaTotal(generasi_terbaik);
 
